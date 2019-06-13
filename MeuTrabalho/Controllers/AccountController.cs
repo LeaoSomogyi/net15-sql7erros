@@ -6,11 +6,19 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using MeuTrabalho.Models;
 using System.Data.SqlClient;
+using MeuTrabalho.Context;
 
 namespace MeuTrabalho.Controllers
 {
     public class AccountController : Controller
     {
+        private IDatabaseContext _databaseContext;
+
+        public AccountController(IDatabaseContext databaseContext)
+        {
+            _databaseContext = databaseContext;
+        }
+
         [HttpGet]
         public IActionResult Index()
         {
@@ -23,18 +31,18 @@ namespace MeuTrabalho.Controllers
         {
             try
             {
-                SqlConnection connection = new SqlConnection("Server=saturnoserver.database.windows.net;Database=MEUDB;User=aclogin;Password=homework-jan31");
-                SqlCommand cmd = new SqlCommand($"SELECT username FROM tbLogin WHERE email='{model.Email}' AND pwd='{model.Password}'", connection);
+                IEnumerable<KeyValuePair<string, string>> parameters = new List<KeyValuePair<string, string>>()
+                {
+                    new KeyValuePair<string, string>("@user", model.Email),
+                    new KeyValuePair<string, string>("@pwd", model.Password)
+                };
 
-                connection.Open();
-                string username = (string)cmd.ExecuteScalar().ToString();
+                var result = _databaseContext.ExecuteProcedure("spLogin", parameters);
 
-                connection.Close();
-
-                return Redirect($"/Home/Dashboard?name={username}");
+                return Redirect($"/Home/Dashboard?name={result.ToString()}");
                 //return RedirectToAction("Dashboard", "Home", new { name = username});
             }
-            catch(Exception ex)
+            catch
             {
                 return View(model);
             }

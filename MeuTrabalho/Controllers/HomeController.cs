@@ -6,16 +6,17 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using MeuTrabalho.Models;
 using System.Data.SqlClient;
+using MeuTrabalho.Context;
 
 namespace MeuTrabalho.Controllers
 {
     public class HomeController : Controller, IDisposable
     {
-        SqlConnection connection;
+        private IDatabaseContext _databaseContext;
 
-        public HomeController()
+        public HomeController(IDatabaseContext databaseContext)
         {
-            this.connection = new SqlConnection("Server=saturnoserver.database.windows.net;Database=MEUDB;User=app;Password=homework-jan31;Max Pool Size=2");
+            _databaseContext = databaseContext;
         }
 
         public IActionResult Index()
@@ -25,12 +26,7 @@ namespace MeuTrabalho.Controllers
 
         public IActionResult Dashboard(string name)
         {
-            if( name == null )
-            {
-                throw new ArgumentNullException(name);
-            }
-
-            ViewBag.Name = name;
+            ViewBag.Name = name ?? throw new ArgumentNullException(name);
             return View();
         }
 
@@ -40,12 +36,9 @@ namespace MeuTrabalho.Controllers
 
             try
             {
-                this.connection.Open();
-
-                SqlCommand sql = new SqlCommand("INSERT tbLog VALUES ('about')", this.connection);
-                sql.ExecuteReader();                
+                _databaseContext.ExecuteCommand("INSERT tbLog VALUES ('about')");
             }
-            catch(Exception ex)
+            catch
             {
                 ViewData["Message"] = "ERROR ABOUT";
             }
@@ -59,14 +52,9 @@ namespace MeuTrabalho.Controllers
 
             try
             {
-                SqlConnection conn1 = this.connection;
-
-                SqlCommand sql = new SqlCommand("INSERT tbLog VALUES ('contact')");
-                sql.Connection = conn1;
-
-                sql.ExecuteScalar();
+                _databaseContext.ExecuteCommand("INSERT tbLog VALUES ('contact')");
             }
-            catch(Exception ex)
+            catch
             {
                 return RedirectToAction("Error");
             }
