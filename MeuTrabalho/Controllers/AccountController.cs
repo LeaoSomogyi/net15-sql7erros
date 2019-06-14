@@ -1,22 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
+﻿using MeuTrabalho.Contracts;
 using MeuTrabalho.Models;
-using System.Data.SqlClient;
-using MeuTrabalho.Context;
+using Microsoft.AspNetCore.Mvc;
 
 namespace MeuTrabalho.Controllers
 {
     public class AccountController : Controller
     {
-        private IDatabaseContext _databaseContext;
+        private readonly IAccountRepository _accountRepository;
 
-        public AccountController(IDatabaseContext databaseContext)
+        public AccountController(IAccountRepository accountRepository)
         {
-            _databaseContext = databaseContext;
+            _accountRepository = accountRepository;
         }
 
         [HttpGet]
@@ -29,22 +23,17 @@ namespace MeuTrabalho.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult Index(LoginViewModel model)
         {
-            try
+            string user = _accountRepository.Login(model.Email, model.Password);
+
+            if (user != null)
             {
-                IEnumerable<KeyValuePair<string, string>> parameters = new List<KeyValuePair<string, string>>()
-                {
-                    new KeyValuePair<string, string>("@user", model.Email),
-                    new KeyValuePair<string, string>("@pwd", model.Password)
-                };
-
-                var result = _databaseContext.ExecuteProcedure("spLogin", parameters);
-
-                return Redirect($"/Home/Dashboard?name={result.ToString()}");
-                //return RedirectToAction("Dashboard", "Home", new { name = username});
+                return Redirect($"/Home/Dashboard?name={user}");
             }
-            catch
+            else
             {
-                return View(model);
+                TempData["message"] = "Combinação de usuário e senha não encontrados.";
+
+                return View();
             }
         }
     }

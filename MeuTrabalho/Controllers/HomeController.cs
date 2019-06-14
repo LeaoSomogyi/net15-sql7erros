@@ -1,22 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using MeuTrabalho.Contracts;
 using Microsoft.AspNetCore.Mvc;
-using MeuTrabalho.Models;
-using System.Data.SqlClient;
-using MeuTrabalho.Context;
+using System;
 
 namespace MeuTrabalho.Controllers
 {
     public class HomeController : Controller, IDisposable
     {
-        private IDatabaseContext _databaseContext;
+        private readonly IHomeRepository _homeRepository;
 
-        public HomeController(IDatabaseContext databaseContext)
+        public HomeController(IHomeRepository homeRepository)
         {
-            _databaseContext = databaseContext;
+            _homeRepository = homeRepository;
         }
 
         public IActionResult Index()
@@ -36,7 +30,7 @@ namespace MeuTrabalho.Controllers
 
             try
             {
-                _databaseContext.ExecuteCommand("INSERT tbLog VALUES ('about')");
+                _homeRepository.InsertLog("about");
             }
             catch
             {
@@ -52,7 +46,7 @@ namespace MeuTrabalho.Controllers
 
             try
             {
-                _databaseContext.ExecuteCommand("INSERT tbLog VALUES ('contact')");
+                _homeRepository.InsertLog("contact");
             }
             catch
             {

@@ -1,27 +1,19 @@
-﻿using Microsoft.Extensions.Configuration;
-using System;
+﻿using MeuTrabalho.Contracts;
 using System.Collections.Generic;
 using System.Data.SqlClient;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace MeuTrabalho.Context
 {
     public class DatabaseContext : IDatabaseContext
     {
-        private ConnectionSettings _connectionSettings;
+        private readonly ConnectionSettings _connectionSettings;
 
         public DatabaseContext(ConnectionSettings connectionSettings)
         {
             _connectionSettings = connectionSettings;
         }
 
-        public DatabaseContext()
-        {
-
-        }
-
-        public SqlDataReader ExecuteCommand(string command)
+        public void ExecuteInsert(string command, string parameterName, string value)
         {
             SqlConnection connection = new SqlConnection(_connectionSettings.Conn);
 
@@ -30,8 +22,9 @@ namespace MeuTrabalho.Context
                 connection.Open();
 
                 SqlCommand sql = new SqlCommand(command, connection);
+                sql.Parameters.AddWithValue(parameterName, value);
 
-                return sql.ExecuteReader();
+                sql.ExecuteNonQuery();
             }
             catch
             {
@@ -39,7 +32,7 @@ namespace MeuTrabalho.Context
             }
             finally
             {
-                connection.Dispose();
+                connection.Close();
             }
         }
 
@@ -51,23 +44,25 @@ namespace MeuTrabalho.Context
             {
                 connection.Open();
 
-                SqlCommand sql = new SqlCommand(name, connection);
-                sql.CommandType = System.Data.CommandType.StoredProcedure;                
+                SqlCommand sql = new SqlCommand(name, connection)
+                {
+                    CommandType = System.Data.CommandType.StoredProcedure
+                };
 
-                foreach (var parameter in parameters)
+                foreach (KeyValuePair<string, string> parameter in parameters)
                 {
                     sql.Parameters.AddWithValue(parameter.Key, parameter.Value);
                 }
 
-                var reader = sql.ExecuteReader();
+                SqlDataReader reader = sql.ExecuteReader();
 
                 if (reader.Read())
                 {
-                    return reader["username"].ToString();
+                    return reader[0];
                 }
                 else
                 {
-                    return string.Empty;
+                    return null;
                 }
             }
             catch

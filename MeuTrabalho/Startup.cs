@@ -9,6 +9,8 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using MeuTrabalho.Context;
+using MeuTrabalho.Contracts;
+using MeuTrabalho.Repositories;
 
 namespace MeuTrabalho
 {
@@ -27,7 +29,11 @@ namespace MeuTrabalho
             var settings = new ConnectionSettings();
             Configuration.Bind("ConnectionSettings", settings);
 
-            services.AddSingleton<IDatabaseContext>(new DatabaseContext(settings));
+            var dataContext = new DatabaseContext(settings);
+
+            services.AddSingleton<IDatabaseContext>(dataContext);
+            services.AddSingleton<IAccountRepository>(new AccountRepository(dataContext));
+            services.AddSingleton<IHomeRepository>(new HomeRepository(dataContext));
 
             services.AddMvc();
         }
